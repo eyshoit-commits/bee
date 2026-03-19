@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+
+  --color-neon-green: #00ff66;
+  --color-neon-cyan: #00f2ff;
+  --color-neon-blue: #0066ff;
+  --color-neon-amber: #ffaa00;
+  --color-neon-orange: #ff6600;
+  --color-neon-magenta: #ff00ff;
+  
+  --shadow-neon-green: 0 0 10px rgba(0, 255, 102, 0.3), 0 0 20px rgba(0, 255, 102, 0.1);
+  --shadow-neon-cyan: 0 0 10px rgba(0, 242, 255, 0.3), 0 0 20px rgba(0, 242, 255, 0.1);
+  --shadow-neon-orange: 0 0 10px rgba(255, 102, 0, 0.3), 0 0 20px rgba(255, 102, 0, 0.1);
+  --shadow-neon-magenta: 0 0 10px rgba(255, 0, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.1);
+}
+
+@layer base {
+  * {
+    @apply border-zinc-800/50;
+  }
+  
+  body {
+    @apply selection:bg-neon-green/30 selection:text-white;
+  }
+}
+
+@layer utilities {
+  .glow-green {
+    box-shadow: var(--shadow-neon-green);
+  }
+  
+  .glow-cyan {
+    box-shadow: var(--shadow-neon-cyan);
+  }
+
+  .glow-orange {
+    box-shadow: var(--shadow-neon-orange);
+  }
+
+  .glow-magenta {
+    box-shadow: var(--shadow-neon-magenta);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+  }
+
+  .border-glow-green {
+    border-color: rgba(0, 255, 102, 0.4);
+    box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.1), 0 0 10px rgba(0, 255, 102, 0.1);
+  }
+
+  .glass-panel {
+    @apply bg-zinc-900/40 backdrop-blur-md border border-white/5;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
