@@ -24,17 +24,14 @@ import {
   Database,
   Globe,
   Lock,
-  MessageSquare,
   FileCode,
-  FolderTree,
   Layers,
   MoreVertical,
-  Maximize2,
-  Minimize2,
   X,
   CheckCircle2,
   AlertCircle,
-  Clock
+  Clock,
+  Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -53,9 +50,10 @@ interface Session {
   activeFiles: string[];
   currentFile: string;
   terminalHistory: { type: string; content: string }[];
-  tasks: { task: string; status: string; progress: number }[];
-  color: 'green' | 'cyan' | 'orange' | 'magenta';
+  tasks: { id: string; task: string; status: string; progress: number }[];
+  color: 'green' | 'cyan' | 'orange' | 'magenta' | 'lime' | 'pink' | 'yellow' | 'purple';
   timestamp: string;
+  lastAccessed?: string;
 }
 
 // --- Components ---
@@ -283,32 +281,114 @@ const MissionControl = () => {
 
 // --- Workbench Surface ---
 
-const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: { 
+const Workbench = ({ 
+  sessions, 
+  activeSessionId, 
+  onSaveSession, 
+  onLoadSession,
+  activeFiles,
+  setActiveFiles,
+  currentFile,
+  setCurrentFile,
+  terminalHistory,
+  setTerminalHistory,
+  tasks,
+  setTasks
+}: { 
   sessions: Session[], 
   activeSessionId: string, 
-  onSaveSession: (name: string) => void,
-  onLoadSession: (id: string) => void 
+  onSaveSession: (name: string, color: Session['color'], icon: any) => void,
+  onLoadSession: (id: string) => void,
+  activeFiles: string[],
+  setActiveFiles: React.Dispatch<React.SetStateAction<string[]>>,
+  currentFile: string,
+  setCurrentFile: React.Dispatch<React.SetStateAction<string>>,
+  terminalHistory: Session['terminalHistory'],
+  setTerminalHistory: React.Dispatch<React.SetStateAction<Session['terminalHistory']>>,
+  tasks: Session['tasks'],
+  setTasks: React.Dispatch<React.SetStateAction<Session['tasks']>>
 }) => {
-  const [activeFile, setActiveFile] = useState('app/core/engine.ts');
-  const [explorerTab, setExplorerTab] = useState<'files' | 'sessions'>('files');
+  const [explorerTab, setExplorerTab] = useState<'files' | 'sessions' | 'history'>('files');
+  const [newSessionName, setNewSessionName] = useState('');
+  const [selectedColor, setSelectedColor] = useState<Session['color']>('magenta');
+  const [selectedIcon, setSelectedIcon] = useState<any>(Code2);
+  const [terminalInput, setTerminalInput] = useState('');
   
   const activeSession = sessions.find(s => s.id === activeSessionId);
-  const sessionColorClass = activeSession?.color === 'orange' ? 'text-neon-orange' : 
-                          activeSession?.color === 'magenta' ? 'text-neon-magenta' : 
-                          activeSession?.color === 'cyan' ? 'text-neon-cyan' : 'text-neon-green';
-  const sessionGlowClass = activeSession?.color === 'orange' ? 'glow-orange' : 
-                         activeSession?.color === 'magenta' ? 'glow-magenta' : 
-                         activeSession?.color === 'cyan' ? 'glow-cyan' : 'glow-green';
+  
+  const getColorClass = (color: Session['color']) => {
+    switch (color) {
+      case 'orange': return 'text-neon-orange';
+      case 'magenta': return 'text-neon-magenta';
+      case 'cyan': return 'text-neon-cyan';
+      case 'lime': return 'text-neon-lime';
+      case 'pink': return 'text-neon-pink';
+      case 'yellow': return 'text-neon-yellow';
+      case 'purple': return 'text-neon-purple';
+      default: return 'text-neon-green';
+    }
+  };
+
+  const getGlowClass = (color: Session['color']) => {
+    switch (color) {
+      case 'orange': return 'glow-orange';
+      case 'magenta': return 'glow-magenta';
+      case 'cyan': return 'glow-cyan';
+      case 'lime': return 'glow-lime';
+      case 'pink': return 'glow-pink';
+      case 'yellow': return 'glow-yellow';
+      case 'purple': return 'glow-purple';
+      default: return 'glow-green';
+    }
+  };
+
+  const getBgClass = (color: Session['color']) => {
+    switch (color) {
+      case 'orange': return 'bg-neon-orange';
+      case 'magenta': return 'bg-neon-magenta';
+      case 'cyan': return 'bg-neon-cyan';
+      case 'lime': return 'bg-neon-lime';
+      case 'pink': return 'bg-neon-pink';
+      case 'yellow': return 'bg-neon-yellow';
+      case 'purple': return 'bg-neon-purple';
+      default: return 'bg-neon-green';
+    }
+  };
+
+  const getBorderClass = (color: Session['color']) => {
+    switch (color) {
+      case 'orange': return 'border-neon-orange/30';
+      case 'magenta': return 'border-neon-magenta/30';
+      case 'cyan': return 'border-neon-cyan/30';
+      case 'lime': return 'border-neon-lime/30';
+      case 'pink': return 'border-neon-pink/30';
+      case 'yellow': return 'border-neon-yellow/30';
+      case 'purple': return 'border-neon-purple/30';
+      default: return 'border-neon-green/30';
+    }
+  };
+
+  const availableIcons = [
+    { icon: Code2, label: 'Code' },
+    { icon: Settings, label: 'Core' },
+    { icon: ShieldCheck, label: 'Security' },
+    { icon: Database, label: 'Data' },
+    { icon: Cloud, label: 'Deploy' },
+    { icon: Zap, label: 'Fast' },
+    { icon: Bug, label: 'Debug' },
+  ];
+
+  const availableColors: Session['color'][] = ['green', 'cyan', 'orange', 'magenta', 'lime', 'pink', 'yellow', 'purple'];
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* File Explorer / Sessions */}
+      {/* File Explorer / Sessions / History */}
       <div className="w-64 border-r border-white/5 flex flex-col bg-[#080808]">
         <div className="flex border-b border-white/5">
           <button 
             onClick={() => setExplorerTab('files')}
             className={cn(
-              "flex-1 p-3 text-[10px] font-bold uppercase tracking-widest transition-colors",
+              "flex-1 p-3 text-[9px] font-bold uppercase tracking-widest transition-colors",
               explorerTab === 'files' ? "text-zinc-200 border-b-2 border-neon-green" : "text-zinc-500 hover:text-zinc-300"
             )}
           >
@@ -317,11 +397,20 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
           <button 
             onClick={() => setExplorerTab('sessions')}
             className={cn(
-              "flex-1 p-3 text-[10px] font-bold uppercase tracking-widest transition-colors",
+              "flex-1 p-3 text-[9px] font-bold uppercase tracking-widest transition-colors",
               explorerTab === 'sessions' ? "text-zinc-200 border-b-2 border-neon-magenta" : "text-zinc-500 hover:text-zinc-300"
             )}
           >
             Sessions
+          </button>
+          <button 
+            onClick={() => setExplorerTab('history')}
+            className={cn(
+              "flex-1 p-3 text-[9px] font-bold uppercase tracking-widest transition-colors",
+              explorerTab === 'history' ? "text-zinc-200 border-b-2 border-neon-cyan" : "text-zinc-500 hover:text-zinc-300"
+            )}
+          >
+            History
           </button>
         </div>
 
@@ -330,9 +419,9 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
             {[
               { name: 'app', type: 'folder', open: true },
               { name: 'core', type: 'folder', open: true, indent: 1 },
-              { name: 'engine.ts', type: 'file', indent: 2, active: activeFile === 'app/core/engine.ts' },
-              { name: 'swarm.ts', type: 'file', indent: 2, active: activeFile === 'app/swarm.ts' },
-              { name: 'types.d.ts', type: 'file', indent: 2, active: activeFile === 'app/types.d.ts' },
+              { name: 'engine.ts', type: 'file', indent: 2, active: currentFile === 'app/core/engine.ts' },
+              { name: 'swarm.ts', type: 'file', indent: 2, active: currentFile === 'app/swarm.ts' },
+              { name: 'types.d.ts', type: 'file', indent: 2, active: currentFile === 'app/types.d.ts' },
               { name: 'lib', type: 'folder', indent: 1 },
               { name: 'components', type: 'folder', indent: 1 },
               { name: 'package.json', type: 'file' },
@@ -340,7 +429,14 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
             ].map((item, i) => (
               <div 
                 key={i} 
-                onClick={() => item.type === 'file' && setActiveFile(item.name)}
+                onClick={() => {
+                  if (item.type === 'file') {
+                    setCurrentFile(`app/${item.indent === 2 ? 'core/' : ''}${item.name}`);
+                    if (!activeFiles.includes(item.name)) {
+                      setActiveFiles([...activeFiles, item.name]);
+                    }
+                  }
+                }}
                 className={cn(
                   "flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer transition-colors",
                   item.active ? "bg-neon-green/10 text-neon-green" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
@@ -356,61 +452,132 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
               </div>
             ))}
           </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            <button 
-              onClick={() => onSaveSession(`Session ${sessions.length + 1}`)}
-              className="w-full py-2 rounded bg-neon-magenta/10 border border-neon-magenta/30 text-neon-magenta text-[10px] font-bold uppercase tracking-wider hover:bg-neon-magenta/20 transition-all mb-4"
-            >
-              + Save Current Session
-            </button>
-            
-            {sessions.map((session) => (
-              <div 
-                key={session.id}
-                onClick={() => onLoadSession(session.id)}
-                className={cn(
-                  "p-3 rounded-lg border transition-all cursor-pointer group",
-                  session.id === activeSessionId 
-                    ? `bg-zinc-900 border-neon-magenta/50 ${session.color === 'magenta' ? 'glow-magenta' : 'glow-orange'}` 
-                    : "bg-white/5 border-white/5 hover:border-white/20"
-                )}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <session.icon 
-                      size={14} 
+        ) : explorerTab === 'sessions' ? (
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-hide">
+            {/* Save Session Form */}
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-3">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">New Session</span>
+              <input 
+                type="text" 
+                placeholder="Session Name..."
+                value={newSessionName}
+                onChange={(e) => setNewSessionName(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-zinc-300 focus:outline-none focus:border-neon-magenta/50"
+              />
+              
+              <div className="space-y-2">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-600">Color</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableColors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
                       className={cn(
-                        session.id === activeSessionId 
-                          ? (session.color === 'magenta' ? "text-neon-magenta" : "text-neon-orange") 
-                          : "text-zinc-500"
-                      )} 
+                        "w-4 h-4 rounded-full transition-all",
+                        getBgClass(color),
+                        selectedColor === color ? "ring-2 ring-white scale-110" : "opacity-50 hover:opacity-100"
+                      )}
                     />
-                    <span className={cn(
-                      "text-xs font-bold uppercase tracking-tight",
-                      session.id === activeSessionId ? "text-white" : "text-zinc-400"
-                    )}>
-                      {session.name}
-                    </span>
-                  </div>
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    session.color === 'magenta' ? "bg-neon-magenta" : 
-                    session.color === 'orange' ? "bg-neon-orange" : 
-                    session.color === 'cyan' ? "bg-neon-cyan" : "bg-neon-green"
-                  )} />
+                  ))}
                 </div>
-                <div className="flex items-center justify-between text-[9px] text-zinc-500 uppercase font-mono">
-                  <span>{session.activeFiles.length} Files</span>
-                  <span>{session.timestamp}</span>
-                </div>
-                {session.id === activeSessionId && (
-                  <div className="mt-2 text-[9px] text-neon-magenta font-bold uppercase tracking-widest animate-pulse">
-                    Active Session
-                  </div>
-                )}
               </div>
-            ))}
+
+              <div className="space-y-2">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-600">Icon</span>
+                <div className="flex flex-wrap gap-2">
+                  {availableIcons.map(({ icon: Icon, label }) => (
+                    <button
+                      key={label}
+                      onClick={() => setSelectedIcon(Icon)}
+                      className={cn(
+                        "p-1.5 rounded bg-white/5 transition-all hover:bg-white/10",
+                        selectedIcon === Icon ? "text-neon-magenta border border-neon-magenta/50" : "text-zinc-500"
+                      )}
+                      title={label}
+                    >
+                      <Icon size={14} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  if (newSessionName.trim()) {
+                    onSaveSession(newSessionName, selectedColor, selectedIcon);
+                    setNewSessionName('');
+                  }
+                }}
+                className="w-full py-2 rounded bg-neon-magenta/20 border border-neon-magenta/30 text-neon-magenta text-[10px] font-bold uppercase tracking-wider hover:bg-neon-magenta/30 transition-all"
+              >
+                Save Session
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Active Sessions</span>
+              {sessions.map((session) => (
+                <div 
+                  key={session.id}
+                  onClick={() => onLoadSession(session.id)}
+                  className={cn(
+                    "p-3 rounded-lg border transition-all cursor-pointer group",
+                    session.id === activeSessionId 
+                      ? `bg-zinc-900 ${getBorderClass(session.color)} ${getGlowClass(session.color)}` 
+                      : "bg-white/5 border-white/5 hover:border-white/20"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <session.icon 
+                        size={14} 
+                        className={cn(
+                          session.id === activeSessionId 
+                            ? getColorClass(session.color)
+                            : "text-zinc-500"
+                        )} 
+                      />
+                      <span className={cn(
+                        "text-xs font-bold uppercase tracking-tight",
+                        session.id === activeSessionId ? "text-white" : "text-zinc-400"
+                      )}>
+                        {session.name}
+                      </span>
+                    </div>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      getBgClass(session.color)
+                    )} />
+                  </div>
+                  <div className="flex items-center justify-between text-[9px] text-zinc-500 uppercase font-mono">
+                    <span>{session.activeFiles.length} Files</span>
+                    <span>{session.timestamp}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-hide">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Session History</span>
+            <div className="space-y-3">
+              {[...sessions].sort((a, b) => (b.lastAccessed || b.timestamp).localeCompare(a.lastAccessed || a.timestamp)).map((session) => (
+                <div 
+                  key={session.id}
+                  className="p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer"
+                  onClick={() => onLoadSession(session.id)}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <session.icon size={12} className={getColorClass(session.color)} />
+                    <span className="text-xs font-medium text-zinc-300">{session.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[8px] text-zinc-600 uppercase font-mono">
+                    <span>Accessed: {session.lastAccessed || session.timestamp}</span>
+                    <span className={getColorClass(session.color)}>{session.color}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -419,18 +586,26 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
       <div className="flex-1 flex flex-col bg-[#050505] overflow-hidden">
         {/* Tabs */}
         <div className="h-10 border-b border-white/5 flex bg-[#0a0a0a]">
-          {(activeSession?.activeFiles || ['engine.ts', 'swarm.ts', 'types.d.ts']).map((tabName, i) => (
+          {activeFiles.map((tabName, i) => (
             <div 
               key={i}
+              onClick={() => setCurrentFile(tabName)}
               className={cn(
                 "flex items-center gap-2 px-4 border-r border-white/5 text-[11px] cursor-pointer transition-all relative",
-                activeFile.includes(tabName) ? "bg-[#050505] text-neon-green" : "text-zinc-500 hover:bg-white/5"
+                currentFile.includes(tabName) ? "bg-[#050505] text-neon-green" : "text-zinc-500 hover:bg-white/5"
               )}
             >
               <FileCode size={12} />
               <span>{tabName}</span>
-              <X size={10} className="ml-2 hover:text-white" />
-              {activeFile.includes(tabName) && (
+              <X 
+                size={10} 
+                className="ml-2 hover:text-white" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveFiles(activeFiles.filter(f => f !== tabName));
+                }}
+              />
+              {currentFile.includes(tabName) && (
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-neon-green" />
               )}
             </div>
@@ -496,21 +671,38 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
               <Layers size={12} /> Output
             </div>
           </div>
-          <div className="flex-1 p-4 font-mono text-xs text-zinc-400 overflow-y-auto">
-            <div className="flex gap-2">
-              <span className="text-neon-green">beehive@swarm-control:~$</span>
-              <span>npm run deploy:swarm --cluster=prod-alpha</span>
-            </div>
-            <div className="mt-2 text-zinc-500">{"[INFO]"} Connecting to Queen-01...</div>
-            <div className="text-zinc-500">{"[INFO]"} Authenticating with cluster credentials...</div>
-            <div className="text-neon-cyan">{"[EXEC]"} Spawning 12 worker bees across 3 regions...</div>
-            <div className="text-zinc-500">{"[INFO]"} Region: us-east-1 [4/4] OK</div>
-            <div className="text-zinc-500">{"[INFO]"} Region: eu-west-1 [4/4] OK</div>
-            <div className="text-zinc-500">{"[INFO]"} Region: ap-south-1 [4/4] OK</div>
-            <div className="mt-1 text-neon-green font-bold">{"[SUCCESS]"} Swarm deployment complete. 12/12 bees active.</div>
+          <div className="flex-1 p-4 font-mono text-xs text-zinc-400 overflow-y-auto scrollbar-hide">
+            {terminalHistory.map((line, i) => (
+              <div key={i} className={cn(
+                "mb-1",
+                line.type === 'input' ? "text-zinc-300" : 
+                line.type === 'exec' ? "text-neon-cyan" :
+                line.type === 'success' ? "text-neon-green font-bold" : "text-zinc-500"
+              )}>
+                {line.type === 'input' && <span className="text-neon-green mr-2">beehive@swarm-control:~$</span>}
+                {line.content}
+              </div>
+            ))}
             <div className="flex gap-2 mt-2">
               <span className="text-neon-green">beehive@swarm-control:~$</span>
-              <span className="w-2 h-4 bg-neon-green animate-pulse" />
+              <input 
+                type="text"
+                value={terminalInput}
+                onChange={(e) => setTerminalInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && terminalInput.trim()) {
+                    setTerminalHistory([...terminalHistory, { type: 'input', content: terminalInput }]);
+                    setTerminalInput('');
+                    // Mock response
+                    setTimeout(() => {
+                      setTerminalHistory(prev => [...prev, { type: 'output', content: `[INFO] Executing: ${terminalInput.split(' ')[0]}...` }]);
+                    }, 500);
+                  }
+                }}
+                className="flex-1 bg-transparent border-none outline-none text-zinc-300"
+                autoFocus
+              />
+              {terminalInput === '' && <span className="w-2 h-4 bg-neon-green animate-pulse" />}
             </div>
           </div>
         </div>
@@ -553,12 +745,16 @@ const Workbench = ({ sessions, activeSessionId, onSaveSession, onLoadSession }: 
           <div className="pt-4 border-t border-white/5">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Active Tasks</h4>
             <div className="space-y-2">
-              {[
-                { task: 'Implement retry logic', status: 'active', progress: 40 },
-                { task: 'Refactor auth middleware', status: 'pending', progress: 0 },
-                { task: 'Update swarm types', status: 'completed', progress: 100 },
-              ].map((task, i) => (
-                <div key={i} className="p-2 rounded bg-white/5 border border-white/5 flex flex-col gap-2">
+              {tasks.map((task, i) => (
+                <div 
+                  key={i} 
+                  className="p-2 rounded bg-white/5 border border-white/5 flex flex-col gap-2 cursor-pointer hover:bg-white/10 transition-colors"
+                  onClick={() => {
+                    const nextStatus = task.status === 'pending' ? 'active' : task.status === 'active' ? 'completed' : 'pending';
+                    const nextProgress = nextStatus === 'completed' ? 100 : nextStatus === 'active' ? 50 : 0;
+                    setTasks(tasks.map(t => t.id === task.id ? { ...t, status: nextStatus, progress: nextProgress } : t));
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-zinc-300">{task.task}</span>
                     {task.status === 'completed' ? (
@@ -612,9 +808,17 @@ export default function BeeHiveApp() {
       name: 'Swarm Core Refactor',
       icon: Settings,
       activeFiles: ['engine.ts', 'swarm.ts'],
-      currentFile: 'engine.ts',
-      terminalHistory: [],
-      tasks: [],
+      currentFile: 'app/core/engine.ts',
+      terminalHistory: [
+        { type: 'input', content: 'npm run deploy:swarm --cluster=prod-alpha' },
+        { type: 'output', content: '[INFO] Connecting to Queen-01...' },
+        { type: 'success', content: 'Swarm deployment complete. 12/12 bees active.' },
+      ],
+      tasks: [
+        { id: 't1', task: 'Implement retry logic', status: 'active', progress: 40 },
+        { id: 't2', task: 'Refactor auth middleware', status: 'pending', progress: 0 },
+        { id: 't3', task: 'Update swarm types', status: 'completed', progress: 100 },
+      ],
       color: 'magenta',
       timestamp: '2m ago'
     },
@@ -623,33 +827,63 @@ export default function BeeHiveApp() {
       name: 'Auth Security Audit',
       icon: ShieldCheck,
       activeFiles: ['types.d.ts'],
-      currentFile: 'types.d.ts',
-      terminalHistory: [],
-      tasks: [],
+      currentFile: 'app/types.d.ts',
+      terminalHistory: [
+        { type: 'input', content: 'security-audit --level=deep' },
+        { type: 'output', content: '[SCAN] Analyzing auth-middleware.go...' },
+      ],
+      tasks: [
+        { id: 't4', task: 'Audit JWT validation', status: 'active', progress: 20 },
+      ],
       color: 'orange',
       timestamp: '1h ago'
     }
   ]);
   const [activeSessionId, setActiveSessionId] = useState<string>('s1');
 
-  const handleSaveSession = (name: string) => {
+  // Current Workbench State (Ephemeral until saved or loaded)
+  const [activeFiles, setActiveFiles] = useState<string[]>(['engine.ts', 'swarm.ts']);
+  const [currentFile, setCurrentFile] = useState<string>('app/core/engine.ts');
+  const [terminalHistory, setTerminalHistory] = useState<Session['terminalHistory']>([
+    { type: 'input', content: 'npm run deploy:swarm --cluster=prod-alpha' },
+    { type: 'output', content: '[INFO] Connecting to Queen-01...' },
+    { type: 'success', content: 'Swarm deployment complete. 12/12 bees active.' },
+  ]);
+  const [tasks, setTasks] = useState<Session['tasks']>([
+    { id: 't1', task: 'Implement retry logic', status: 'active', progress: 40 },
+    { id: 't2', task: 'Refactor auth middleware', status: 'pending', progress: 0 },
+    { id: 't3', task: 'Update swarm types', status: 'completed', progress: 100 },
+  ]);
+
+  const handleSaveSession = (name: string, color: Session['color'], icon: any) => {
     const newSession: Session = {
       id: Math.random().toString(36).substr(2, 9),
       name,
-      icon: Code2,
-      activeFiles: ['engine.ts', 'swarm.ts', 'types.d.ts'],
-      currentFile: 'engine.ts',
-      terminalHistory: [],
-      tasks: [],
-      color: sessions.length % 2 === 0 ? 'cyan' : 'orange',
-      timestamp: 'Just now'
+      icon,
+      activeFiles: [...activeFiles],
+      currentFile,
+      terminalHistory: [...terminalHistory],
+      tasks: [...tasks],
+      color,
+      timestamp: new Date().toLocaleTimeString(),
+      lastAccessed: new Date().toLocaleTimeString()
     };
     setSessions([newSession, ...sessions]);
     setActiveSessionId(newSession.id);
   };
 
   const handleLoadSession = (id: string) => {
-    setActiveSessionId(id);
+    const session = sessions.find(s => s.id === id);
+    if (session) {
+      setActiveSessionId(id);
+      setActiveFiles(session.activeFiles);
+      setCurrentFile(session.currentFile);
+      setTerminalHistory(session.terminalHistory);
+      setTasks(session.tasks);
+      setSessions(prev => prev.map(s => 
+        s.id === id ? { ...s, lastAccessed: new Date().toLocaleTimeString() } : s
+      ));
+    }
   };
   
   return (
@@ -698,8 +932,20 @@ export default function BeeHiveApp() {
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "w-2 h-2 rounded-full",
-                    sessions.find(s => s.id === activeSessionId)?.color === 'magenta' ? "bg-neon-magenta glow-magenta" : 
-                    sessions.find(s => s.id === activeSessionId)?.color === 'orange' ? "bg-neon-orange glow-orange" : "bg-neon-cyan glow-cyan"
+                    (() => {
+                      const color = sessions.find(s => s.id === activeSessionId)?.color;
+                      switch (color) {
+                        case 'green': return 'bg-neon-green glow-green';
+                        case 'cyan': return 'bg-neon-cyan glow-cyan';
+                        case 'orange': return 'bg-neon-orange glow-orange';
+                        case 'magenta': return 'bg-neon-magenta glow-magenta';
+                        case 'lime': return 'bg-neon-lime glow-lime';
+                        case 'pink': return 'bg-neon-pink glow-pink';
+                        case 'yellow': return 'bg-neon-yellow glow-yellow';
+                        case 'purple': return 'bg-neon-purple glow-purple';
+                        default: return 'bg-neon-green glow-green';
+                      }
+                    })()
                   )} />
                   <span className="text-[10px] font-mono text-zinc-200 uppercase tracking-widest">
                     {sessions.find(s => s.id === activeSessionId)?.name}
@@ -776,6 +1022,14 @@ export default function BeeHiveApp() {
                   activeSessionId={activeSessionId} 
                   onSaveSession={handleSaveSession}
                   onLoadSession={handleLoadSession}
+                  activeFiles={activeFiles}
+                  setActiveFiles={setActiveFiles}
+                  currentFile={currentFile}
+                  setCurrentFile={setCurrentFile}
+                  terminalHistory={terminalHistory}
+                  setTerminalHistory={setTerminalHistory}
+                  tasks={tasks}
+                  setTasks={setTasks}
                 />
               )}
             </motion.div>

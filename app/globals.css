@@ -12,11 +12,19 @@
   --color-neon-amber: #ffaa00;
   --color-neon-orange: #ff6600;
   --color-neon-magenta: #ff00ff;
+  --color-neon-lime: #ccff00;
+  --color-neon-pink: #ff0066;
+  --color-neon-yellow: #ffff00;
+  --color-neon-purple: #9900ff;
   
   --shadow-neon-green: 0 0 10px rgba(0, 255, 102, 0.3), 0 0 20px rgba(0, 255, 102, 0.1);
   --shadow-neon-cyan: 0 0 10px rgba(0, 242, 255, 0.3), 0 0 20px rgba(0, 242, 255, 0.1);
   --shadow-neon-orange: 0 0 10px rgba(255, 102, 0, 0.3), 0 0 20px rgba(255, 102, 0, 0.1);
   --shadow-neon-magenta: 0 0 10px rgba(255, 0, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.1);
+  --shadow-neon-lime: 0 0 10px rgba(204, 255, 0, 0.3), 0 0 20px rgba(204, 255, 0, 0.1);
+  --shadow-neon-pink: 0 0 10px rgba(255, 0, 102, 0.3), 0 0 20px rgba(255, 0, 102, 0.1);
+  --shadow-neon-yellow: 0 0 10px rgba(255, 255, 0, 0.3), 0 0 20px rgba(255, 255, 0, 0.1);
+  --shadow-neon-purple: 0 0 10px rgba(153, 0, 255, 0.3), 0 0 20px rgba(153, 0, 255, 0.1);
 }
 
 @layer base {
@@ -44,6 +52,22 @@
 
   .glow-magenta {
     box-shadow: var(--shadow-neon-magenta);
+  }
+
+  .glow-lime {
+    box-shadow: var(--shadow-neon-lime);
+  }
+
+  .glow-pink {
+    box-shadow: var(--shadow-neon-pink);
+  }
+
+  .glow-yellow {
+    box-shadow: var(--shadow-neon-yellow);
+  }
+
+  .glow-purple {
+    box-shadow: var(--shadow-neon-purple);
   }
 
   .text-glow-green {
