@@ -16,6 +16,14 @@
   --color-neon-pink: #ff0066;
   --color-neon-yellow: #ffff00;
   --color-neon-purple: #9900ff;
+  --color-neon-red: #ff0033;
+  --color-neon-teal: #00ffcc;
+  --color-neon-gold: #ffcc00;
+  --color-neon-rose: #ff007f;
+  --color-neon-sky: #00ccff;
+  --color-neon-violet: #7f00ff;
+  --color-neon-indigo: #4b0082;
+  --color-neon-emerald: #50c878;
   
   --shadow-neon-green: 0 0 10px rgba(0, 255, 102, 0.3), 0 0 20px rgba(0, 255, 102, 0.1);
   --shadow-neon-cyan: 0 0 10px rgba(0, 242, 255, 0.3), 0 0 20px rgba(0, 242, 255, 0.1);
@@ -25,6 +33,14 @@
   --shadow-neon-pink: 0 0 10px rgba(255, 0, 102, 0.3), 0 0 20px rgba(255, 0, 102, 0.1);
   --shadow-neon-yellow: 0 0 10px rgba(255, 255, 0, 0.3), 0 0 20px rgba(255, 255, 0, 0.1);
   --shadow-neon-purple: 0 0 10px rgba(153, 0, 255, 0.3), 0 0 20px rgba(153, 0, 255, 0.1);
+  --shadow-neon-red: 0 0 10px rgba(255, 0, 51, 0.3), 0 0 20px rgba(255, 0, 51, 0.1);
+  --shadow-neon-teal: 0 0 10px rgba(0, 255, 204, 0.3), 0 0 20px rgba(0, 255, 204, 0.1);
+  --shadow-neon-gold: 0 0 10px rgba(255, 204, 0, 0.3), 0 0 20px rgba(255, 204, 0, 0.1);
+  --shadow-neon-rose: 0 0 10px rgba(255, 0, 127, 0.3), 0 0 20px rgba(255, 0, 127, 0.1);
+  --shadow-neon-sky: 0 0 10px rgba(0, 204, 255, 0.3), 0 0 20px rgba(0, 204, 255, 0.1);
+  --shadow-neon-violet: 0 0 10px rgba(127, 0, 255, 0.3), 0 0 20px rgba(127, 0, 255, 0.1);
+  --shadow-neon-indigo: 0 0 10px rgba(75, 0, 130, 0.3), 0 0 20px rgba(75, 0, 130, 0.1);
+  --shadow-neon-emerald: 0 0 10px rgba(80, 200, 120, 0.3), 0 0 20px rgba(80, 200, 120, 0.1);
 }
 
 @layer base {
@@ -68,6 +84,38 @@
 
   .glow-purple {
     box-shadow: var(--shadow-neon-purple);
+  }
+
+  .glow-red {
+    box-shadow: var(--shadow-neon-red);
+  }
+
+  .glow-teal {
+    box-shadow: var(--shadow-neon-teal);
+  }
+
+  .glow-gold {
+    box-shadow: var(--shadow-neon-gold);
+  }
+
+  .glow-rose {
+    box-shadow: var(--shadow-neon-rose);
+  }
+
+  .glow-sky {
+    box-shadow: var(--shadow-neon-sky);
+  }
+
+  .glow-violet {
+    box-shadow: var(--shadow-neon-violet);
+  }
+
+  .glow-indigo {
+    box-shadow: var(--shadow-neon-indigo);
+  }
+
+  .glow-emerald {
+    box-shadow: var(--shadow-neon-emerald);
   }
 
   .text-glow-green {
